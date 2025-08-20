@@ -1,0 +1,34 @@
+2025-06-23 21:31:48,472 - ERROR - Error processing image for roll_no 2411020912496: list index out of range
+2025-06-23 21:31:48,680 - ERROR - Error processing image for roll_no 2411020912471: list index out of range
+2025-06-23 21:31:48,895 - ERROR - Error processing image for roll_no 2411020912456: list index out of range
+2025-06-23 21:31:49,653 - ERROR - Error processing image for roll_no 2411020912610: list index out of range
+2025-06-23 21:31:50,834 - ERROR - Error processing image for roll_no 2411020912631: list index out of range
+2025-06-23 21:31:55,515 - ERROR - Error processing image for roll_no 2411020912722: list index out of range
+2025-06-23 21:32:03,513 - ERROR - Error processing image for roll_no 2411020912910: list index out of range
+2025-06-23 21:32:04,364 - ERROR - Error processing image for roll_no 2411020912959: list index out of range
+2025-06-23 21:32:05,789 - ERROR - Error processing image for roll_no 2411020913000: list index out of range
+2025-06-23 21:32:06,012 - ERROR - Error processing image for roll_no 2411020913007: list index out of range
+2025-06-23 21:32:08,467 - ERROR - Error processing image for roll_no 2411020913054: list index out of range
+2025-06-23 21:32:14,432 - ERROR - Error processing image for roll_no 2411020913183: list index out of range
+2025-06-23 21:32:15,021 - INFO - Loaded 38 face encodings from pickle file
+2025-06-23 21:32:15,028 - INFO - Starting video processing
+2025-06-23 21:43:21,178 - ERROR - Error processing image for roll_no 2411020912496: list index out of range
+2025-06-23 21:43:21,386 - ERROR - Error processing image for roll_no 2411020912471: list index out of range
+2025-06-23 21:43:21,591 - ERROR - Error processing image for roll_no 2411020912456: list index out of range
+2025-06-23 21:43:22,374 - ERROR - Error processing image for roll_no 2411020912610: list index out of range
+2025-06-23 21:43:23,206 - ERROR - Error processing image for roll_no 2411020912631: list index out of range
+2025-06-23 21:43:28,453 - ERROR - Error processing image for roll_no 2411020912722: list index out of range
+2025-06-23 21:43:34,784 - ERROR - Error processing image for roll_no 2411020912910: list index out of range
+2025-06-23 21:43:35,675 - ERROR - Error processing image for roll_no 2411020912959: list index out of range
+2025-06-23 21:43:37,018 - ERROR - Error processing image for roll_no 2411020913000: list index out of range
+2025-06-23 21:43:37,234 - ERROR - Error processing image for roll_no 2411020913007: list index out of range
+2025-06-23 21:43:39,431 - ERROR - Error processing image for roll_no 2411020913054: list index out of range
+2025-06-23 21:43:44,940 - ERROR - Error processing image for roll_no 2411020913183: list index out of range
+2025-06-23 21:43:45,549 - INFO - Loaded 38 face encodings from pickle file
+2025-06-23 21:43:45,555 - INFO - Starting video processing
+2025-06-23 21:54:31,759 - INFO - Initializing FrameProcessor
+2025-06-23 21:54:31,789 - INFO - Successfully connected to MongoDB database: PATNA_2025-05-03
+2025-06-23 22:17:01,817 - INFO - Successfully loaded 50 face encodings, 0 failed
+2025-06-23 22:17:01,821 - INFO - Starting video processing
+2025-06-23 22:17:01,822 - INFO - Starting video processing: D02_20250503061702.mp4
+2025-06-23 22:17:02,161 - INFO - Video info - Frames: 76308, FPS: 25.00, Duration: 3052.32s

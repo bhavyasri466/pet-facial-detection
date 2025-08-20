@@ -1,0 +1,221 @@
+import cv2
+import pickle
+import numpy as np
+from pymongo import MongoClient
+from bson.objectid import ObjectId
+from datetime import datetime
+import gridfs
+import face_recognition
+import base64
+from io import BytesIO
+from PIL import Image
+
+class FrameProcessor:
+    def __init__(self, config):
+        self.config = config
+        self.client = MongoClient(config['mongo_uri'])
+        self.db = self.client[config['db_name']]
+        self.fs = gridfs.GridFS(self.db)
+        self.fs_wrong = gridfs.GridFS(self.db, 'wrong_tag_images')
+        self.detected_collection = self.db['detected_frames']
+        self.matched_collection = self.db['matched_results']
+        self.wrong_tag_collection = self.db['wrong_tag_images']
+        
+    def load_pickle(self, pickle_path):
+        with open(pickle_path, 'rb') as f:
+            data = pickle.load(f)
+        # Print pickle file structure for debugging
+        print("Pickle file structure:", type(data))
+        if isinstance(data, list) and len(data) > 0:
+            print("First entry keys:", data[0].keys())
+            print("Image type:", type(data[0]['image']))
+        return data
+    
+    def img_to_base64_cv2(self, image):
+        # Convert NumPy array to base64 string
+        retval, buffer = cv2.imencode('.jpg', image)
+        if not retvalue:
+            raise Exception("Failed to encode image to base64")
+        jpg_as_text = base64.b64encode(buffer)
+        return jpg_as_text
+    
+    def save_frame_to_gridfs(self, frame):
+        # Encode frame to JPEG format
+        success, buffer = cv2.imencode('.jpg', frame)
+        if not success:
+            raise Exception("Failed to encode frame")
+        # Convert buffer to bytes
+        image_bytes = buffer.tobytes()
+        # Save to GridFS
+        return self.fs.put(image_bytes, content_type='image/jpeg')
+    
+    def insert_wrong(self, bib_number, timestamp, pet_date, image):
+        # Store non-detected frame in wrong_tag_images collection
+        img_string = self.img_to_base64_cv2(image)
+        img_id = self.fs_wrong.put(img_string)
+        mydict = {
+            "bib_number": bib_number,
+            "timestamp": timestamp,
+            "pet_date": pet_date,
+            "fetch_flag": None,
+            "image": img_id
+        }
+        self.wrong_tag_collection.insert_one(mydict)
+    
+    def compare_faces(self, frame, pickle_data):
+        # Convert frame to RGB for face_recognition
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame_encodings = face_recognition.face_encodings(rgb_frame)
+        frame_locations = face_recognition.face_locations(rgb_frame)  # Get face locations
+        
+        matches = []
+        for frame_encoding, frame_location in zip(frame_encodings, frame_locations):
+            for data in pickle_data:
+                # Check for required keys
+                required_keys = ['image', 'bib', 'roll_no']
+                if not all(key in data for key in required_keys):
+                    print(f"Skipping entry due to missing keys: {data.keys()}")
+                    continue
+                
+                # Load and process image from pickle data
+                try:
+                    image_data = data['image']
+                    if isinstance(image_data, Image.Image):  # Handle PIL image
+                        # Convert PIL image to NumPy array
+                        image = np.array(image_data)
+                        if image.ndim == 2:  # Convert grayscale to RGB if needed
+                            image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+                    elif isinstance(image_data, str):  # Handle base64-encoded string
+                        image_data = base64.b64decode(image_data)
+                        image_array = np.frombuffer(image_data, np.uint8)
+                        image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
+                    elif isinstance(image_data, np.ndarray):  # Handle NumPy array
+                        image = image_data
+                        if image.ndim == 2:  # Convert grayscale to RGB if needed
+                            image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+                    else:
+                        print(f"Unsupported image type for bib {data.get('bib', 'unknown')}: {type(image_data)}")
+                        continue
+                    
+                    # Convert to RGB and extract encoding
+                    rgb_image = image if image.shape[-1] == 3 else cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                    known_encodings = face_recognition.face_encodings(rgb_image)
+                    if not known_encodings:
+                        print(f"No faces found in pickle image for bib {data.get('bib', 'unknown')}")
+                        continue
+                    known_encoding = known_encodings[0]  # Take first face encoding
+                    
+                    # Compare faces
+                    result = face_recognition.compare_faces([known_encoding], frame_encoding)
+                    confidence = face_recognition.face_distance([known_encoding], frame_encoding)[0]
+                    
+                    if result[0]:  # If match found
+                        matches.append({
+                            'bib': data['bib'],
+                            'roll_no': data['roll_no'],
+                            'confidence': 1 - confidence,
+                            'box': frame_location,  # Use detected face location
+                            'method': 'face_recognition'
+                        })
+                except Exception as e:
+                    print(f"Error processing image for bib {data.get('bib', 'unknown')}: {str(e)}")
+                    continue
+        
+        return matches, len(frame_encodings) > 0
+    
+    def process_video(self, video_path, pickle_path):
+        # Load pickle data
+        pickle_data = self.load_pickle_data(pickle_path)
+        
+        # Open video
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            raise Exception("Error opening video file")
+            
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        frame_interval = int(fps / 3)  # Every 3rd frame per second
+        frame_count = 0
+        saved_frame_count = 0
+        
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+                
+            frame_count += 1
+            
+            # Process every 3rd frame per second
+            if frame_count % frame_interval == 0:
+                timestamp = frame_count / fps
+                
+                # Save frame to GridFS
+                try:
+                    image_id = self.save_frame_to_gridfs(frame)
+                except Exception as e:
+                    print(f"Error saving frame {frame_count}: {str(e)}")
+                    continue
+                
+                # Save detected frame metadata
+                detected_doc = {
+                    'frame_count': frame_count,
+                    'timestamp': timestamp,
+                    'image_id': image_id,
+                    'pet_date': self.config['pet_date'],
+                    'batch_no': self.config['batch'],
+                    'processing_time': datetime.utcnow()
+                }
+                self.detected_collection.insert_one(detected_doc)
+                
+                # Compare with pickle data
+                matches, has_faces = self.compare_faces(frame, pickle_data)
+                
+                # If no faces detected, insert into wrong_tag_images
+                if not has_faces:
+                    self.insert_wrong_tag(
+                        bib_number="unknown",
+                        timestamp=timestamp,
+                        pet_date=self.config['pet_date'],
+                        image=frame
+                    )
+                
+                # Save matched results
+                for match in matches:
+                    doc = {
+                        'bib_number': str(match['bib']),
+                        'rollno': str(match['roll_no']),
+                        'pet_date': str(self.config['pet_date']),
+                        'batch_no': int(self.config['batch']),
+                        'timestamp': timestamp,
+                        'frame_count': int(frame_count),
+                        'confidence': float(match['confidence']),
+                        'face_location': [int(x) for x in match['box']],
+                        'detection_method': str(match['method']),
+                        'image': image_id,
+                        'ai_unique_id': str(ObjectId()),
+                        'processing_time': datetime.utcnow()
+                    }
+                    self.matched_collection.insert_one(doc)
+                
+                saved_frame_count += 1
+                print(f"Processed frame {frame_count} at {timestamp:.2f} seconds")
+        
+        cap.release()
+        print(f"Total frames processed: {saved_frame_count}")
+        
+    def close(self):
+        self.client.close()
+
+# Usage example
+if __name__ == "__main__":
+    config = {
+        'mongo_uri': 'mongodb://localhost:27017/',
+        'db_name': 'PATNA_2025-06-24',
+        'pet_date': '2025-06-24',
+        'batch': 1
+    }
+    
+    processor = FrameProcessor(config)
+    try:
+        processor.process_video('D02_20250503061702.mp4', 'images_2025-05-03_batch1.pickle')
+    finally:
+        processor.close()
