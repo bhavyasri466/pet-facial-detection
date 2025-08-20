@@ -1,0 +1,16 @@
+2025-06-23 18:56:57,127 - ERROR - Failed to connect to MongoDB: module 'pymongo' has no attribute 'gridfs'
+2025-06-23 18:57:30,613 - ERROR - Failed to connect to MongoDB: module 'pymongo' has no attribute 'gridfs'
+2025-06-23 18:58:45,087 - INFO - Connected to MongoDB database: PATNA_2025-05-03
+2025-06-23 18:58:45,226 - INFO - Loaded pickle file: images_2025-05-03_batch1.pickle
+2025-06-23 18:58:45,226 - INFO - Starting frame processing
+2025-06-23 18:58:45,701 - ERROR - Error processing video D02_20250503061702.mp4: can only write strings or file-like objects
+2025-06-23 18:58:45,716 - INFO - Processing complete
+2025-06-23 19:03:05,389 - INFO - Connected to MongoDB database: PATNA_2025-05-03
+2025-06-23 19:03:05,515 - INFO - Loaded pickle file: images_2025-05-03_batch1.pickle
+2025-06-23 19:03:05,518 - INFO - Starting frame processing
+2025-06-24 12:44:16,623 - INFO - Connected to MongoDB database: PATNA_2025-05-03
+2025-06-24 12:44:16,741 - INFO - Loaded pickle file: images_2025-05-03_batch1.pickle
+2025-06-24 12:44:16,742 - INFO - Starting frame processing
+2025-06-24 13:08:56,765 - INFO - Connected to MongoDB database: PATNA_2025-05-03
+2025-06-24 13:08:56,963 - INFO - Loaded pickle file: images_2025-05-03_batch1.pickle
+2025-06-24 13:08:56,964 - INFO - Starting frame processing
