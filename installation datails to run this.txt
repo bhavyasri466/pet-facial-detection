@@ -1,0 +1,5 @@
+python 3.6.1
+pip install opencv-python==4.5.5.64
+cd C:\pet_facial_recognition_mongodb_wrongtag_livefacial
+.venv\Scripts\activate.bat
+python trynowfacial.py

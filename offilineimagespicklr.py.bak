@@ -1,0 +1,109 @@
+import os
+import pickle
+import cv2
+from datetime import datetime
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+def create_pickle_from_folder(folder_path, output_pickle_path):
+    """
+    Create a pickle file from images in a folder with specific naming pattern
+    
+    Args:
+        folder_path (str): Path to folder containing images
+        output_pickle_path (str): Path where to save the output pickle file
+    """
+    try:
+        # Verify folder exists
+        if not os.path.isdir(folder_path):
+            raise ValueError(f"Folder does not exist: {folder_path}")
+        
+        # Get all image files in folder
+        image_files = [f for f in os.listdir(folder_path) 
+                     if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+        
+        if not image_files:
+            raise ValueError("No image files found in the folder")
+        
+        # Extract batch number from folder name (e.g., "batch_1_images_20250624_162705")
+        folder_name = os.path.basename(folder_path)
+        try:
+            batch_no = int(folder_name.split('_')[1])  # Gets the '1' from "batch_1_..."
+        except (IndexError, ValueError):
+            logger.warning("Could not parse batch number from folder name, defaulting to 1")
+            batch_no = 1
+        
+        # Process each image
+        image_data_list = []
+        
+        for filename in image_files:
+            try:
+                # Parse filename (format: batch<no>_<bib>_<rollno>.jpg)
+                parts = os.path.splitext(filename)[0].split('_')
+                if len(parts) != 3:
+                    logger.warning(f"Skipping file with invalid name format: {filename}")
+                    continue
+                
+                file_batch_no = int(parts[0].replace("batch", ""))
+                bib = parts[1]
+                roll_no = parts[2]
+                
+                # Verify batch number matches folder
+                if file_batch_no != batch_no:
+                    logger.warning(f"File {filename} has batch number {file_batch_no} but folder suggests {batch_no}")
+                
+                # Read image
+                image_path = os.path.join(folder_path, filename)
+                image = cv2.imread(image_path)
+                if image is None:
+                    logger.warning(f"Could not read image: {filename}")
+                    continue
+                
+                # Convert to RGB (OpenCV loads as BGR)
+                image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                
+                # Create data dictionary
+                image_data = {
+                    'batch': batch_no,
+                    'bib': bib,
+                    'roll_no': roll_no,
+                    'image': image_rgb,  # Store as numpy array
+                    'filename': filename,
+                    'processing_time': datetime.now().isoformat()
+                }
+                
+                image_data_list.append(image_data)
+                logger.info(f"Processed: {filename}")
+                
+            except Exception as e:
+                logger.error(f"Error processing file {filename}: {str(e)}")
+                continue
+        
+        # Save to pickle file
+        with open(output_pickle_path, 'wb') as f:
+            pickle.dump(image_data_list, f, protocol=pickle.HIGHEST_PROTOCOL)
+        
+        logger.info(f"Successfully created pickle file at {output_pickle_path}")
+        logger.info(f"Total images processed: {len(image_data_list)}")
+        
+        return output_pickle_path
+    
+    except Exception as e:
+        logger.error(f"Failed to create pickle file: {str(e)}")
+        raise
+
+if __name__ == "__main__":
+    # Example usage
+    folder_path = "batch_1_images_20250624_162705"  # Your folder path here
+    output_pickle = "batch_1_images.pickle"  # Output pickle filename
+    
+    try:
+        create_pickle_from_folder(folder_path, output_pickle)
+    except Exception as e:
+        logger.error(f"Script failed: {str(e)}")

@@ -1,0 +1,35 @@
+camera_ip = rtsp://admin:timing@2024@192.168.1.50:554/Streaming/channels/101
+
+camera_ip_1 = rtsp://admin:timing@2025@192.168.1.72:554/Streaming/channels/101
+
+camera_ip_2 = rtsp://admin:timing@123@192.168.0.161:554/Streaming/channels/101
+
+bib_recognition_tablename = bib_detection_results
+
+wrong_tag_tablename = wrong_tag_results
+
+pet_date = 2025-05-03
+
+batch = 1
+
+database_name = Patna_2025-05-03
+
+ttiplserver_db_address = 192.168.1.100
+
+ttiplserver_username = sa
+
+ttiplserver_db_name = bsf_new_pet_2025
+
+
+facial_mongodb_ip = localhost
+
+facial_tablename = facial_recognition_results
+
+facial_recognition_tablename = facial_recognition
+
+facial_detections_tablename = facial_detections
+
+facial_manual_verification = facial_manual_verification
+
+
+
